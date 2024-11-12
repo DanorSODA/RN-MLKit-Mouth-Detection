@@ -1,25 +1,46 @@
-import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Text, Platform } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Text,
+  Button,
+  Platform,
+  Dimensions,
+} from "react-native";
 import {
   Camera,
-  useCameraDevice,
+  useCameraDevices,
+  useFrameProcessor,
   useSkiaFrameProcessor,
   useCameraFormat,
+  CameraPosition,
+  useCameraDevice,
 } from "react-native-vision-camera";
 import {
   FaceDetectionOptions,
   useFaceDetector,
 } from "react-native-vision-camera-face-detector";
 import { Skia, PaintStyle } from "@shopify/react-native-skia";
+import { Worklets } from "react-native-worklets-core";
+import PointsSkia from "./PointsSkia";
+
+interface Point {
+  x: number;
+  y: number;
+}
 
 export default function CameraScreen() {
-  const device = useCameraDevice("front");
+  const [position, setPosition] = useState<CameraPosition>("front");
+  const device = useCameraDevice(position);
   const format = useCameraFormat(device, [
     { videoResolution: { width: 1920, height: 1080 } },
   ]);
   const pixelFormat = Platform.OS === "ios" ? "rgb" : "yuv";
+  const [mouthPoints, setMouthPoints] = useState<Point[]>([]);
 
-  // Request camera permission on mount
+  // Get screen dimensions
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
   useEffect(() => {
     (async () => {
       const status = await Camera.requestCameraPermission();
@@ -29,37 +50,49 @@ export default function CameraScreen() {
     })();
   }, []);
 
-  // Initialize face detection options
   const faceDetectionOptions = useRef<FaceDetectionOptions>({
     performanceMode: "accurate",
     contourMode: "all",
+    autoScale: Platform.OS === "android" ? true : false,
+    windowHeight: screenHeight,
+    windowWidth: screenWidth,
   }).current;
 
   const { detectFaces } = useFaceDetector(faceDetectionOptions);
 
-  // Define paint for drawing points
-  const pointPaint = Skia.Paint();
-  pointPaint.setColor(Skia.Color("green"));
-  pointPaint.setStrokeWidth(5);
-  pointPaint.setStyle(PaintStyle.Fill);
+  const setMouthPointsJS = Worklets.createRunOnJS(setMouthPoints);
 
-  // Skia Frame Processor
-  const frameProcessor = useSkiaFrameProcessor(
+  // Android frame processor (currently when using skia frame processor on android front camera, it renders a black screen)
+  const androidFrameProcessor = useFrameProcessor(
     (frame) => {
       "worklet";
-
-      // Render the camera frame
-      frame.render();
-
-      // Detect faces
       const faces = detectFaces(frame);
-
-      // console.log("Detected Faces:", JSON.stringify(faces, null, 2));
 
       if (faces.length > 0) {
         const face = faces[0];
+        const lowerLipContour = Object.values(
+          face.contours.LOWER_LIP_TOP || {}
+        );
+        const upperLipContour = Object.values(
+          face.contours.UPPER_LIP_BOTTOM || {}
+        );
+        const allContours = [...lowerLipContour, ...upperLipContour] as Point[];
 
-        // Use Object.values to safely access each point as an array
+        setMouthPointsJS(allContours);
+      }
+    },
+    [setMouthPointsJS]
+  );
+
+  // iOS frame processor (unchanged)
+  const iosFrameProcessor = useSkiaFrameProcessor(
+    (frame) => {
+      "worklet";
+      frame.render();
+      const faces = detectFaces(frame);
+
+      if (faces.length > 0) {
+        const face = faces[0];
         const lowerLipContour = Object.values(
           face.contours.LOWER_LIP_TOP || {}
         );
@@ -68,7 +101,11 @@ export default function CameraScreen() {
         );
         const allContours = [...lowerLipContour, ...upperLipContour];
 
-        // Draw each point in the contours on the frame
+        const pointPaint = Skia.Paint();
+        pointPaint.setColor(Skia.Color("green"));
+        pointPaint.setStrokeWidth(5);
+        pointPaint.setStyle(PaintStyle.Fill);
+
         for (let i = 0; i < allContours.length; i++) {
           const point = allContours[i];
           if (point && point.x != null && point.y != null) {
@@ -79,6 +116,10 @@ export default function CameraScreen() {
     },
     [detectFaces]
   );
+
+  const flipCamera = useCallback(() => {
+    setPosition((pos) => (pos === "front" ? "back" : "front"));
+  }, []);
 
   if (!device) {
     return (
@@ -95,11 +136,28 @@ export default function CameraScreen() {
         isActive={true}
         device={device}
         format={format}
-        frameProcessor={frameProcessor}
+        frameProcessor={
+          Platform.OS === "ios" ? iosFrameProcessor : androidFrameProcessor
+        }
         fps={format?.maxFps}
         pixelFormat={pixelFormat}
         enableFpsGraph={true}
       />
+
+      {Platform.OS === "android" && (
+        <PointsSkia
+          points={mouthPoints}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
+          cameraWidth={format?.videoWidth || 1920}
+          cameraHeight={format?.videoHeight || 1080}
+        />
+      )}
+
+      {/* Flip Camera Button */}
+      <View style={styles.buttonContainer}>
+        <Button title="Flip Camera" onPress={flipCamera} />
+      </View>
     </View>
   );
 }
@@ -109,5 +167,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 30,
+    alignSelf: "center",
   },
 });
