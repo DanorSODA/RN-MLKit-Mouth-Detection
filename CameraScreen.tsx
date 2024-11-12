@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import {
   Camera,
-  useCameraDevices,
   useFrameProcessor,
   useSkiaFrameProcessor,
   useCameraFormat,
