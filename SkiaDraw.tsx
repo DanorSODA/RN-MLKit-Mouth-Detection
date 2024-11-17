@@ -1,12 +1,12 @@
 import React from "react";
-import { Canvas, Circle as SkiaCircle, Path } from "@shopify/react-native-skia";
+import { Canvas, Path } from "@shopify/react-native-skia";
 
 interface Point {
   x: number;
   y: number;
 }
 
-interface PointsSkiaProps {
+interface SkiaDrawProps {
   points: Point[] | undefined;
   screenWidth: number;
   screenHeight: number;
@@ -14,13 +14,13 @@ interface PointsSkiaProps {
   cameraHeight: number;
 }
 
-const PointsSkia = ({
+const SkiaDraw = ({
   points,
   screenWidth,
   screenHeight,
   cameraWidth,
   cameraHeight,
-}: PointsSkiaProps) => {
+}: SkiaDrawProps) => {
   if (!points || points.length === 0) return null;
 
   // Calculate aspect ratio-preserving scaling factor
@@ -68,4 +68,4 @@ const PointsSkia = ({
   );
 };
 
-export default PointsSkia;
+export default SkiaDraw;

@@ -21,7 +21,7 @@ import {
 } from "react-native-vision-camera-face-detector";
 import { Skia, PaintStyle } from "@shopify/react-native-skia";
 import { Worklets } from "react-native-worklets-core";
-import PointsSkia from "./PointsSkia";
+import SkiaDraw from "./SkiaDraw";
 
 interface Point {
   x: number;
@@ -161,7 +161,7 @@ export default function CameraScreen() {
       />
 
       {Platform.OS === "android" && (
-        <PointsSkia
+        <SkiaDraw
           points={mouthPoints}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
