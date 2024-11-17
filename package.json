@@ -9,20 +9,20 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@shopify/react-native-skia": "1.5.3",
-    "expo": "51.0.39",
-    "expo-dev-client": "~4.0.29",
-    "expo-status-bar": "~1.12.1",
-    "react": "18.2.0",
-    "react-native": "0.74.5",
-    "react-native-reanimated": "3.10.1",
+    "@shopify/react-native-skia": "1.5.0",
+    "expo": "^52.0.7",
+    "expo-dev-client": "~5.0.2",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.2",
+    "react-native-reanimated": "~3.16.1",
     "react-native-vision-camera": "4.6.1",
     "react-native-vision-camera-face-detector": "^1.7.1",
     "react-native-worklets-core": "^1.5.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@types/react": "~18.2.45",
+    "@types/react": "~18.3.12",
     "typescript": "5.3.3"
   },
   "private": true

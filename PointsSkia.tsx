@@ -1,5 +1,5 @@
 import React from "react";
-import { Canvas, Circle as SkiaCircle } from "@shopify/react-native-skia";
+import { Canvas, Circle as SkiaCircle, Path } from "@shopify/react-native-skia";
 
 interface Point {
   x: number;
@@ -21,7 +21,7 @@ const PointsSkia = ({
   cameraWidth,
   cameraHeight,
 }: PointsSkiaProps) => {
-  if (!points) return null;
+  if (!points || points.length === 0) return null;
 
   // Calculate aspect ratio-preserving scaling factor
   const scale = Math.min(
@@ -34,8 +34,19 @@ const PointsSkia = ({
   const offsetY = (screenHeight - cameraHeight * scale) / 2;
 
   // Fine-tuning adjustments for positioning
-  const fineTuneX = 2; // Adjust as needed for horizontal alignment
-  const fineTuneY = 10; // Adjust as needed for vertical alignment
+  const fineTuneX = 2;
+  const fineTuneY = 10;
+
+  // Create the path data string
+  const pathData = points.reduce((acc, point, index) => {
+    const x = screenWidth - point.x;
+    const y = point.y + fineTuneY;
+
+    if (index === 0) {
+      return `M ${x} ${y}`;
+    }
+    return `${acc} L ${x} ${y}`;
+  }, "");
 
   return (
     <Canvas
@@ -47,15 +58,12 @@ const PointsSkia = ({
         height: screenHeight,
       }}
     >
-      {points.map((point, index) => (
-        <SkiaCircle
-          key={`point-${point.x}-${point.y}-${index}`}
-          cx={screenWidth - point.x} // Mirror horizontally
-          cy={point.y + fineTuneY} // Apply vertical scaling and offset
-          r={3} // Radius for visibility
-          color={"green"}
-        />
-      ))}
+      <Path
+        path={`${pathData} Z`}
+        strokeWidth={3}
+        style="stroke"
+        color="green"
+      />
     </Canvas>
   );
 };

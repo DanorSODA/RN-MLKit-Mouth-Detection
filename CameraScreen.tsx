@@ -60,7 +60,6 @@ export default function CameraScreen() {
   const { detectFaces } = useFaceDetector(faceDetectionOptions);
 
   const setMouthPointsJS = Worklets.createRunOnJS(setMouthPoints);
-
   // Android frame processor (currently when using skia frame processor on android front camera, it renders a black screen)
   const androidFrameProcessor = useFrameProcessor(
     (frame) => {
@@ -78,12 +77,14 @@ export default function CameraScreen() {
         const allContours = [...lowerLipContour, ...upperLipContour] as Point[];
 
         setMouthPointsJS(allContours);
+      } else {
+        setMouthPointsJS([]);
       }
     },
     [setMouthPointsJS]
   );
 
-  // iOS frame processor (unchanged)
+  // iOS frame processor
   const iosFrameProcessor = useSkiaFrameProcessor(
     (frame) => {
       "worklet";
@@ -100,16 +101,32 @@ export default function CameraScreen() {
         );
         const allContours = [...lowerLipContour, ...upperLipContour];
 
-        const pointPaint = Skia.Paint();
-        pointPaint.setColor(Skia.Color("green"));
-        pointPaint.setStrokeWidth(5);
-        pointPaint.setStyle(PaintStyle.Fill);
+        const linePaint = Skia.Paint();
+        linePaint.setColor(Skia.Color("green"));
+        linePaint.setStrokeWidth(6);
+        linePaint.setStyle(PaintStyle.Stroke);
 
-        for (let i = 0; i < allContours.length; i++) {
-          const point = allContours[i];
-          if (point && point.x != null && point.y != null) {
-            frame.drawCircle(point.x, point.y, 6, pointPaint);
+        // Create a path to draw the line
+        const path = Skia.Path.Make();
+
+        // Start the path at the first point
+        if (allContours.length > 0) {
+          const firstPoint = allContours[0];
+          path.moveTo(firstPoint.x, firstPoint.y);
+
+          // Draw lines to each subsequent point
+          for (let i = 1; i < allContours.length; i++) {
+            const point = allContours[i];
+            if (point && point.x != null && point.y != null) {
+              path.lineTo(point.x, point.y);
+            }
           }
+
+          // Close the path by connecting back to the first point
+          path.close();
+
+          // Draw the path
+          frame.drawPath(path, linePaint);
         }
       }
     },
