@@ -46,12 +46,11 @@ pod install
 First, create a development build:
 
 ```bash
-// For iOS
 yarn ios
 ```
+or for android:
 
 ```bash
-// For Android
 yarn android
 ```
 
