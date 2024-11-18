@@ -33,7 +33,9 @@ export default function CameraScreen() {
   const device = useCameraDevice(position);
   const format = useCameraFormat(device, [
     { videoResolution: { width: 1920, height: 1080 } },
+    { fps: 60 },
   ]);
+  const fps = format?.maxFps;
   const pixelFormat = Platform.OS === "ios" ? "rgb" : "yuv";
   const [mouthPoints, setMouthPoints] = useState<Point[]>([]);
 
@@ -155,7 +157,7 @@ export default function CameraScreen() {
         frameProcessor={
           Platform.OS === "ios" ? iosFrameProcessor : androidFrameProcessor
         }
-        fps={format?.maxFps}
+        fps={fps}
         pixelFormat={pixelFormat}
         enableFpsGraph={true}
       />
