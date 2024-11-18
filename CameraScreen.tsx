@@ -52,7 +52,7 @@ export default function CameraScreen() {
   }, []);
 
   const faceDetectionOptions = useRef<FaceDetectionOptions>({
-    performanceMode: "accurate",
+    performanceMode: "fast",
     contourMode: "all",
     autoScale: Platform.OS === "android" ? true : false,
     windowHeight: screenHeight,
