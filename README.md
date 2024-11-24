@@ -48,6 +48,7 @@ First, create a development build:
 ```bash
 yarn ios
 ```
+
 or for android:
 
 ```bash
@@ -96,11 +97,7 @@ The project uses several key dependencies:
    - Ensure camera permissions are granted in device settings
    - The app will request permissions on first launch
 
-2. Black Screen Issues
-
-   - On Android with front camera: This is a known limitation when using Skia frame processor
-
-3. Build Issues
+2. Build Issues
    - Clear metro bundler cache: `yarn start --c`
    - For iOS: Clean XCode build folder
    - For Android: Clean gradle build `cd android && ./gradlew clean`

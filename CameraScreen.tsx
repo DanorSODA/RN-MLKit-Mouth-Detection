@@ -1,15 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  Button,
-  Platform,
-  Dimensions,
-} from "react-native";
+import { View, StyleSheet, Text, Button, Platform } from "react-native";
 import {
   Camera,
-  useFrameProcessor,
   useSkiaFrameProcessor,
   useCameraFormat,
   CameraPosition,
@@ -20,8 +12,6 @@ import {
   useFaceDetector,
 } from "react-native-vision-camera-face-detector";
 import { Skia, PaintStyle } from "@shopify/react-native-skia";
-import { Worklets } from "react-native-worklets-core";
-import SkiaDraw from "./SkiaDraw";
 
 interface Point {
   x: number;
@@ -37,10 +27,6 @@ export default function CameraScreen() {
   ]);
   const fps = format?.maxFps;
   const pixelFormat = Platform.OS === "ios" ? "rgb" : "yuv";
-  const [mouthPoints, setMouthPoints] = useState<Point[]>([]);
-
-  // Get screen dimensions
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   useEffect(() => {
     (async () => {
@@ -54,43 +40,20 @@ export default function CameraScreen() {
   const faceDetectionOptions = useRef<FaceDetectionOptions>({
     performanceMode: "fast",
     contourMode: "all",
-    autoScale: Platform.OS === "android" ? true : false,
-    windowHeight: screenHeight,
-    windowWidth: screenWidth,
   }).current;
 
   const { detectFaces } = useFaceDetector(faceDetectionOptions);
-
-  const setMouthPointsJS = Worklets.createRunOnJS(setMouthPoints);
-  // Android frame processor (currently when using skia frame processor on android front camera, it renders a black screen)
-  const androidFrameProcessor = useFrameProcessor(
-    (frame) => {
-      "worklet";
-      const faces = detectFaces(frame);
-
-      if (faces.length > 0) {
-        const face = faces[0];
-        const lowerLipContour = Object.values(
-          face.contours.LOWER_LIP_TOP || {}
-        );
-        const upperLipContour = Object.values(
-          face.contours.UPPER_LIP_BOTTOM || {}
-        );
-        const allContours = [...lowerLipContour, ...upperLipContour] as Point[];
-
-        setMouthPointsJS(allContours);
-      } else {
-        setMouthPointsJS([]);
-      }
-    },
-    [setMouthPointsJS]
-  );
-
-  // iOS frame processor
-  const iosFrameProcessor = useSkiaFrameProcessor(
+  const frameProcessor = useSkiaFrameProcessor(
     (frame) => {
       "worklet";
       frame.render();
+      // Workaround for Android rotation to fix the camera orientation.
+      if (Platform.OS === "android") {
+        frame.translate(frame.width / 2, frame.height / 2);
+        frame.rotate(90, 0, 0);
+        frame.translate(-frame.height / 2, -frame.width / 2);
+      }
+
       const faces = detectFaces(frame);
 
       if (faces.length > 0) {
@@ -154,23 +117,11 @@ export default function CameraScreen() {
         isActive={true}
         device={device}
         format={format}
-        frameProcessor={
-          Platform.OS === "ios" ? iosFrameProcessor : androidFrameProcessor
-        }
+        frameProcessor={frameProcessor}
         fps={fps}
         pixelFormat={pixelFormat}
         enableFpsGraph={true}
       />
-
-      {Platform.OS === "android" && (
-        <SkiaDraw
-          points={mouthPoints}
-          screenWidth={screenWidth}
-          screenHeight={screenHeight}
-          cameraWidth={format?.videoWidth || 1920}
-          cameraHeight={format?.videoHeight || 1080}
-        />
-      )}
 
       {/* Flip Camera Button */}
       <View style={styles.buttonContainer}>
