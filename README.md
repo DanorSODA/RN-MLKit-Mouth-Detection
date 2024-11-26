@@ -81,9 +81,9 @@ vision-camera-mouth-detection-demo/
 
 ## Key Files
 
-- [src/MouthDetectionScreen.tsx](./src/MouthDetectionScreen.tsx) - Main screen component with camera implementation
-- [src/hooks/useCamera.ts](./src/hooks/useCamera.ts) - Camera management and configuration hook
-- [src/hooks/useFaceFrameProcessing.ts](./src/hooks/useFaceFrameProcessing.ts) - Face detection and mouth contour processing
+- [MouthDetectionScreen](./src/MouthDetectionScreen.tsx) - Main screen component with camera implementation
+- [useCamera](./src/hooks/useCamera.ts) - Camera management and configuration hook
+- [useFaceFrameProcessing](./src/hooks/useFaceFrameProcessing.ts) - Face detection and mouth contour processing
 
 ## Dependencies
 
