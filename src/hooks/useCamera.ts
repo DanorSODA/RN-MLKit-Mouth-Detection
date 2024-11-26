@@ -12,15 +12,17 @@
  * - Camera permissions handling
  * - Platform-specific pixel format handling
  */
-import { useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  Camera,
   CameraPosition,
-  PixelFormat,
   useCameraDevice,
   useCameraFormat,
 } from "react-native-vision-camera";
 import { Platform } from "react-native";
+import { useAppState } from "@react-native-community/hooks";
+import { useIsFocused } from "@react-navigation/core";
+
+type PixelFormat = "yuv" | "rgb";
 
 /**
  * Hook for managing camera device and configuration
@@ -35,32 +37,44 @@ import { Platform } from "react-native";
  */
 export const useCamera = () => {
   const [position, setPosition] = useState<CameraPosition>("front");
+  const formatPreferences = useMemo(
+    () => [{ videoResolution: { width: 1920, height: 1080 } }, { fps: 60 }],
+    []
+  );
+
   const device = useCameraDevice(position);
-  const format = useCameraFormat(device, [
-    { videoResolution: { width: 1920, height: 1080 } },
-    { fps: 60 },
-  ]);
-  const cameraFps = format?.maxFps;
-  const pixelFormat: PixelFormat = Platform.OS === "ios" ? "rgb" : "yuv";
+  const format = useCameraFormat(device, formatPreferences);
+  const cameraFps = useMemo(() => format?.maxFps, [format]);
+  const pixelFormat = useMemo<PixelFormat>(
+    () => (Platform.OS === "ios" ? "rgb" : "yuv"),
+    []
+  );
 
-  useEffect(() => {
-    (async () => {
-      const status = await Camera.requestCameraPermission();
-      if (status === "denied") {
-        console.log("Camera permission denied");
-      }
-    })();
-  }, []);
+  const isFocused = useIsFocused();
+  const appState = useAppState();
 
-  const flipCamera = () =>
-    setPosition((pos) => (pos === "front" ? "back" : "front"));
+  // Memoize computed values
+  const isAppActive = useMemo(
+    () => isFocused && appState === "active",
+    [isFocused, appState]
+  );
 
-  return {
-    device,
-    format,
-    cameraFps,
-    pixelFormat,
-    position,
-    flipCamera,
-  };
+  // Memoize the flipCamera callback
+  const flipCamera = useCallback(
+    () => setPosition((pos) => (pos === "front" ? "back" : "front")),
+    []
+  );
+
+  return useMemo(
+    () => ({
+      device,
+      format,
+      cameraFps,
+      pixelFormat,
+      position,
+      flipCamera,
+      isAppActive,
+    }),
+    [device, format, cameraFps, pixelFormat, position, flipCamera, isAppActive]
+  );
 };

@@ -11,7 +11,7 @@
  * - Platform-specific camera rotation handling
  * - Green contour drawing using Skia
  */
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Platform } from "react-native";
 import { useSkiaFrameProcessor } from "react-native-vision-camera";
 import {
@@ -30,10 +30,13 @@ export const useFaceFrameProcessing = () => {
   /**
    * Ref for face detection options
    */
-  const faceDetectionOptions = useRef<FaceDetectionOptions>({
-    performanceMode: "fast",
-    contourMode: "all",
-  }).current;
+  const faceDetectionOptions = useMemo<FaceDetectionOptions>(
+    () => ({
+      performanceMode: "fast",
+      contourMode: "all",
+    }),
+    []
+  );
 
   /**
    * Hook for face detection
@@ -98,5 +101,5 @@ export const useFaceFrameProcessing = () => {
     [detectFaces]
   );
 
-  return { frameProcessor };
+  return useMemo(() => ({ frameProcessor }), [frameProcessor]);
 };
