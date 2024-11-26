@@ -1,5 +1,5 @@
-import CameraScreen from "./CameraScreen";
+import MouthDetectionScreen from "./src/MouthDetectionScreen";
 
 export default function App() {
-  return <CameraScreen />;
+  return <MouthDetectionScreen />;
 }

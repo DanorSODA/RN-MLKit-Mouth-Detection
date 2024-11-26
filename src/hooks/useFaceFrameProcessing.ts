@@ -1,48 +1,48 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Text, Button, Platform } from "react-native";
-import {
-  Camera,
-  useSkiaFrameProcessor,
-  useCameraFormat,
-  CameraPosition,
-  useCameraDevice,
-} from "react-native-vision-camera";
+/**
+ * @file Face Frame Processing Hook for Vision Camera
+ * @author Danor S.O.D.A
+ * @lastModified 26-11-2024
+ *
+ * @description
+ * Custom hook that handles real-time face detection and mouth contour drawing.
+ * Key features:
+ * - Real-time face detection using Vision Camera
+ * - Mouth contour detection and visualization
+ * - Platform-specific camera rotation handling
+ * - Green contour drawing using Skia
+ */
+import { useRef } from "react";
+import { Platform } from "react-native";
+import { useSkiaFrameProcessor } from "react-native-vision-camera";
 import {
   FaceDetectionOptions,
   useFaceDetector,
 } from "react-native-vision-camera-face-detector";
 import { Skia, PaintStyle } from "@shopify/react-native-skia";
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-export default function CameraScreen() {
-  const [position, setPosition] = useState<CameraPosition>("front");
-  const device = useCameraDevice(position);
-  const format = useCameraFormat(device, [
-    { videoResolution: { width: 1920, height: 1080 } },
-    { fps: 60 },
-  ]);
-  const fps = format?.maxFps;
-  const pixelFormat = Platform.OS === "ios" ? "rgb" : "yuv";
-
-  useEffect(() => {
-    (async () => {
-      const status = await Camera.requestCameraPermission();
-      if (status === "denied") {
-        console.log("Camera permission denied");
-      }
-    })();
-  }, []);
-
+/**
+ * Hook for processing camera frames to detect and visualize mouth contours
+ *
+ * @returns {Object} Object containing the frameProcessor function
+ * @property {Function} frameProcessor - Worklet function that processes each camera frame
+ */
+export const useFaceFrameProcessing = () => {
+  /**
+   * Ref for face detection options
+   */
   const faceDetectionOptions = useRef<FaceDetectionOptions>({
     performanceMode: "fast",
     contourMode: "all",
   }).current;
 
+  /**
+   * Hook for face detection
+   */
   const { detectFaces } = useFaceDetector(faceDetectionOptions);
+
+  /**
+   * Frame processor for Skia rendering
+   */
   const frameProcessor = useSkiaFrameProcessor(
     (frame) => {
       "worklet";
@@ -98,48 +98,5 @@ export default function CameraScreen() {
     [detectFaces]
   );
 
-  const flipCamera = useCallback(() => {
-    setPosition((pos) => (pos === "front" ? "back" : "front"));
-  }, []);
-
-  if (!device) {
-    return (
-      <View style={styles.container}>
-        <Text>No Device</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <Camera
-        style={StyleSheet.absoluteFill}
-        isActive={true}
-        device={device}
-        format={format}
-        frameProcessor={frameProcessor}
-        fps={fps}
-        pixelFormat={pixelFormat}
-        enableFpsGraph={true}
-      />
-
-      {/* Flip Camera Button */}
-      <View style={styles.buttonContainer}>
-        <Button title="Flip Camera" onPress={flipCamera} />
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 30,
-    alignSelf: "center",
-  },
-});
+  return { frameProcessor };
+};

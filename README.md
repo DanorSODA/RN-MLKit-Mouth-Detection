@@ -12,7 +12,7 @@ A React Native application that demonstrates real-time mouth contour detection u
 
 ## Prerequisites
 
-- Node.js (v16 or newer)
+- Node.js (v18 or newer)
 - Yarn package manager
 - iOS: XCode (for iOS development)
 - Android: Android Studio (for Android development)
@@ -63,9 +63,27 @@ yarn start
 
 ## Project Structure
 
-- `CameraScreen.tsx` - Main camera implementation with face detection
-- `PointsSkia.tsx` - Skia-based rendering component for mouth points
-- `package.json` - Project dependencies and scripts
+```tree
+vision-camera-mouth-detection-demo/
+├── scripts/
+│   └── postinstall.js
+├── src/
+│   ├── hooks/
+│   │   ├── useCamera.ts
+│   │   └── useFaceFrameProcessing.ts
+│   ├── MouthDetectionScreen.tsx
+├── ios/
+├── android/
+├── node_modules/
+├── package.json
+└── README.md
+```
+
+## Key Files
+
+- [src/MouthDetectionScreen.tsx](./src/MouthDetectionScreen.tsx) - Main screen component with camera implementation
+- [src/hooks/useCamera.ts](./src/hooks/useCamera.ts) - Camera management and configuration hook
+- [src/hooks/useFaceFrameProcessing.ts](./src/hooks/useFaceFrameProcessing.ts) - Face detection and mouth contour processing
 
 ## Dependencies
 
